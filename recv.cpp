@@ -46,11 +46,17 @@ string recvFileName()
  */
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
+	key_t key = ftok("keyfile.txt", 'a');
+
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, IPC_CREAT | 0666); // 
+    sharedMemPtr = shmat(shmid, NULL, 0);
+
+	msqid = msgget(key, IPC_CREAT | 0666);
 	
 	/* TODO: 
         1. Create a file called keyfile.txt containing string "Hello world" (you may do
- 	    so manually or from the code).
-	2. Use ftok("keyfile.txt", 'a') in order to generate the key.
+ 	    so manually or from the code). (DONE)
+	2. Use ftok("keyfile.txt", 'a') in order to generate the key. (DONE)
 	3. Use will use this key in the TODO's below. Use the same key for the queue
 	   and the shared memory segment. This also serves to illustrate the difference
  	   between the key and the id used in message queues and shared memory. The key is
@@ -59,11 +65,11 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	*/
 	
 
-	/* TODO: Allocate a shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE. */
+	/* TODO: Allocate a shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE.  (DONE)*/
 	
 	/* TODO: Attach to the shared memory */
 	
-	/* TODO: Create a message queue */
+	/* TODO: Create a message queue (DONE) */
 	
 	/* TODO: Store the IDs and the pointer to the shared memory region in the corresponding parameters */
 	
