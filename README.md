@@ -2,7 +2,6 @@
 Summer 2026 CPSC 351 Project
 
 Participants: 
-Gregorio Camarena
 Alyx Cui Edio
 Kedar Patil
 John Yohannan
