@@ -1,0 +1,5 @@
+*.o
+sender
+recv
+keyfile.txt
+*__recv
