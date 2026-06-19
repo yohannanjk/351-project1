@@ -95,7 +95,7 @@ unsigned long mainLoop(const char* fileName)
 	string recvFileNameStr = fileName;
 	
 	/* TODO: append __recv to the end of file name (DONE)*/
-	recvFileNameStr += "__recv"
+	recvFileNameStr += "__recv";
 	
 	/* Open the file for writing */
 	FILE* fp = fopen(recvFileNameStr.c_str(), "w");
@@ -127,7 +127,7 @@ unsigned long mainLoop(const char* fileName)
 		 */
 		
 		message msg;
-		msgrcv(msquid, &msg, sizeof(message) - sizeof(long), SENDER_DATA_TYPE, 0);
+		msgrcv(msqid, &msg, sizeof(message) - sizeof(long), SENDER_DATA_TYPE, 0);
 
 		msgSize = msg.size;
 
@@ -180,7 +180,7 @@ void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 	shmctl(shmid, IPC_RMID, NULL);
 
 	/* TODO: Deallocate the message queue (DONE)*/
-	msgctl(msquid, IPC_RMID, NULL);
+	msgctl(msqid, IPC_RMID, NULL);
 }
 
 /**
@@ -191,6 +191,7 @@ void ctrlCSignal(int signal)
 {
 	/* Free system V resources */
 	cleanUp(shmid, msqid, sharedMemPtr);
+	exit(0);
 }
 
 int main(int argc, char** argv)
@@ -215,7 +216,7 @@ int main(int argc, char** argv)
 	/* TODO: Detach from shared memory segment, and deallocate shared memory (DONE)
 	 * and message queue (i.e. call cleanup) 
 	 */
-	cleanUp(shmid, msquid, sharedMemPtr);
+	cleanUp(shmid, msqid, sharedMemPtr);
 		
 	return 0;
 }
