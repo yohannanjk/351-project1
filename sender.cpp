@@ -56,7 +56,11 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
  */
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {
-	/* TODO: Detach from shared memory */
+	if(shmdt(sharedMemPtr) == -1)
+	{
+		perror("shmdt");
+		exit(-1);
+	}
 }
 
 /**
@@ -100,22 +104,48 @@ unsigned long sendFile(const char* fileName)
 			exit(-1);
 		}
 		
-		/* TODO: count the number of bytes sent. */		
-			
-		/* TODO: Send a message to the receiver telling him that the data is ready
+		/* A read of 0 means we've hit EOF; stop here without sending this as
+		 * a data chunk -- the unconditional size=0 message below the loop
+		 * is the single EOF signal the receiver expects (no ack for it).
+		 */
+		if(sndMsg.size == 0)
+			break;
+
+		/* Count the number of bytes sent. */
+		numBytesSent += sndMsg.size;
+
+		/* Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
-		
-		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
- 		 * that he finished saving a chunk of memory. 
- 		 */
-	}
-	
+		sndMsg.mtype = SENDER_DATA_TYPE;
+		if(msgsnd(msqid, &sndMsg, sizeof(message) - sizeof(long), 0) == -1)
+		{
+			perror("msgsnd");
+			exit(-1);
+		}
 
-	/** TODO: once we are out of the above loop, we have finished sending the file.
+		/* Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us
+ 		 * that he finished saving a chunk of memory.
+ 		 */
+		if(msgrcv(msqid, &rcvMsg, sizeof(ackMessage) - sizeof(long), RECV_DONE_TYPE, 0) == -1)
+		{
+			perror("msgrcv");
+			exit(-1);
+		}
+	}
+
+
+	/* Once we are out of the above loop, we have finished sending the file.
  	  * Lets tell the receiver that we have nothing more to send. We will do this by
- 	  * sending a message of type SENDER_DATA_TYPE with size field set to 0. 	
+ 	  * sending a message of type SENDER_DATA_TYPE with size field set to 0.
 	  */
+	sndMsg.mtype = SENDER_DATA_TYPE;
+	sndMsg.size = 0;
+	if(msgsnd(msqid, &sndMsg, sizeof(message) - sizeof(long), 0) == -1)
+	{
+		perror("msgsnd");
+		exit(-1);
+	}
 
 		
 	/* Close the file */
@@ -137,16 +167,28 @@ void sendFileName(const char* fileName)
 	 * the maximum buffer size in the fileNameMsg
 	 * struct. If exceeds, then terminate with an error.
 	 */
+	if (strlen(fileName) >= MAX_FILE_NAME_SIZE) {
+		fprintf(stderr, "File name exceeds maximum buffer size of %d\n", MAX_FILE_NAME_SIZE);
+		exit(-1);
+	}
 
-	/* TODO: Create an instance of the struct representing the message
+	/* Create an instance of the struct representing the message
 	 * containing the name of the file.
 	 */
+	fileNameMsg nameMsg;
 
-	/* TODO: Set the message type FILE_NAME_TRANSFER_TYPE */
+	/* Set the message type FILE_NAME_TRANSFER_TYPE */
+	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
 
-	/* TODO: Set the file name in the message */
+	/* Set the file name in the message */
+	strcpy(nameMsg.fileName, fileName);
 
-	/* TODO: Send the message using msgsnd */
+	/* Send the message using msgsnd */
+	if(msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), 0) == -1)
+	{
+		perror("msgsnd");
+		exit(-1);
+	}
 }
 
 
